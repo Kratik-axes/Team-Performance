@@ -42,19 +42,19 @@ st.markdown("""
 
 # Load and prepare data
 @st.cache_data
-def load_data():
+def load_data(uploaded_file):
     try:
-        df = pd.read_csv('main_sheet.csv.csv')
+        df = pd.read_csv(uploaded_file)
         df = df[df['total_actions'] > 0].copy()
-
+        
         # Convert DOJ and calculate tenure
         df['DOJ'] = pd.to_datetime(df['DOJ'], errors='coerce')
         df['tenure_months'] = ((datetime.now() - df['DOJ']).dt.days / 30).round(1)
-
+        
         # Calculate performance metrics
         df['efficiency_score'] = (df['total_actions'] / (df['avg_engage_per_ticket_secs'] / 60)).round(2)
         df['consistency_score'] = (100 / (1 + df['engage_std_dev_seconds'])).round(2)
-
+        
         # Calculate percentages for time buckets
         buckets = [
             'engage_under_15s', 'engage_15s_to_20s', 'engage_20s_to_25s',
@@ -62,15 +62,15 @@ def load_data():
             'engage_40s_to_45s', 'engage_45s_to_50s', 'engage_50s_to_55s',
             'engage_55s_to_60s', 'engage_over_60s'
         ]
-
+        
         for bucket in buckets:
             if bucket in df.columns:
                 df[f'{bucket}_pct'] = ((df[bucket] / df['total_actions']) * 100).round(1)
-
+        
         # Calculate medians
         median_time = df['avg_engage_per_ticket_secs'].median()
         median_actions = df['total_actions'].median()
-
+        
         # Assign quadrants
         def assign_quadrant(row):
             if row['avg_engage_per_ticket_secs'] <= median_time and row['total_actions'] >= median_actions:
@@ -81,7 +81,7 @@ def load_data():
                 return '🐢 Workhorses'
             else:
                 return '🎯 Needs Support'
-
+        
         df['quadrant'] = df.apply(assign_quadrant, axis=1)
         df['quadrant_detailed'] = df['quadrant'].map({
             '🏆 Stars': '🏆 Stars (Fast + High Volume)',
@@ -89,12 +89,9 @@ def load_data():
             '🐢 Workhorses': '🐢 Workhorses (Slow + High Volume)',
             '🎯 Needs Support': '🎯 Needs Support (Slow + Low Volume)'
         })
-
+        
         return df, median_time, median_actions
-
-    except FileNotFoundError:
-        st.error("⚠️ Error: 'main_sheet.csv.csv' file not found. Please upload the file.")
-        return None, None, None
+    
     except Exception as e:
         st.error(f"⚠️ Error loading data: {str(e)}")
         return None, None, None
