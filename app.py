@@ -313,16 +313,42 @@ def create_chart(filtered_df, full_df, median_time, median_actions):
 
     return fig
 
-# Main app
 def main():
     st.markdown('<div class="main-header">⏱️ Employee Performance Dashboard 📊</div>', unsafe_allow_html=True)
     st.markdown('<div class="sub-header">Interactive Quadrant Analysis with Advanced Filters</div>', unsafe_allow_html=True)
-
-    # Load data
-    df, median_time, median_actions = load_data()
-
+    
+    # FILE UPLOADER - ADD THIS
+    st.markdown("### 📤 Upload Your Data File")
+    uploaded_file = st.file_uploader(
+        "Choose your employee data CSV file",
+        type=['csv'],
+        help="Upload the main_sheet.csv.csv file with employee performance data"
+    )
+    
+    if uploaded_file is None:
+        st.info("👆 Please upload your CSV file to get started")
+        st.markdown("#### Required Columns:")
+        st.markdown("""
+        - `employee_name`, `employee_id`
+        - `DOJ` (Date of Joining)
+        - `total_actions`, `avg_engage_per_ticket_secs`
+        - `engage_std_dev_seconds`
+        - Time buckets: `engage_under_15s`, `engage_15s_to_20s`, etc.
+        """)
+        st.stop()
+    
+    # Load data from uploaded file
+    df, median_time, median_actions = load_data(uploaded_file)
+    
     if df is None:
         st.stop()
+    
+    st.success(f"✅ Successfully loaded {len(df)} employees!")
+    st.markdown("---")
+    
+    # REST OF YOUR CODE CONTINUES HERE...
+    # (Keep all the sidebar filters and chart code as is)
+
 
     # Sidebar filters
     st.sidebar.header("🔍 Filter Options")
